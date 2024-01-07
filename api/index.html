@@ -1,0 +1,106 @@
+<html>
+	<head>
+		<title>YOUR SITE</title>
+		<style>
+			body {
+				padding: 1rem;
+				margin: 1rem;
+			}
+			.link {
+				color: #0000ff;
+				text-decoration: none;
+				cursor: pointer;
+			}
+
+			.link:hover {
+				color: #ff0000;
+			}
+
+			#message {
+				height: 25px;
+				border: "1px solid red";
+			}
+		</style>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+		<script>
+			$(function () {
+				window
+					.fetch("questions")
+					.then((response) => response.json())
+					.then((data) => {
+						getQuestions(data.questions);
+					});
+			});
+
+			function reset() {
+				$("question").val("");
+			}
+
+			function getQuestions(existingQuestions) {
+				let questions = "";
+				if (existingQuestions && existingQuestions.length !== 0) {
+					existingQuestions.forEach((question) => {
+						questions += `${question.question} <span class="link" onClick="deleteQuestion('${question.id}')">x</span><br/>`;
+					});
+				} else {
+					questions = "No questions to display";
+				}
+				reset();
+
+				$("#questions").html(questions);
+			}
+
+			function deleteQuestion(id) {
+				window
+					.fetch("question", {
+						method: "DELETE",
+						body: JSON.stringify({
+							id,
+						}),
+						headers: {
+							"Access-Control-Allow-Origin": "*", // Required for CORS support to work
+							"Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+						},
+					})
+					.then((response) => response.json())
+					.then((data) => {
+						getQuestions(data.questions);
+					});
+			}
+
+			async function submit() {
+				let questions = "";
+				document.getElementById("message").innerHTML = "";
+				window
+					.fetch("question", {
+						method: "POST",
+						body: JSON.stringify({
+							question: document.getElementById("question").value,
+						}),
+						headers: {
+							"Access-Control-Allow-Origin": "*", // Required for CORS support to work
+							"Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+						},
+					})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.error) {
+							document.getElementById("message").innerHTML = "<span style='color:#ff0000; font-weight:bold'>" + data.message + "</span>";
+						}
+						if (typeof data.questions !== "undefined") {
+							getQuestions(data.questions);
+						}
+					});
+			}
+		</script>
+
+		<link href="https://d1owsou015wajw.cloudfront.net/20220405175512/css/bootstrap.min.css" rel="stylesheet" media="screen" />
+	</head>
+
+	<body>
+		<div id="message" style="height: 35px; border: '1px solid blue'"></div>
+		<input type="text" id="question" placeholder="Ask a Question" />&#160;<button onclick="submit()">Submit</button><br /><br />
+
+		<div id="questions">Loading...</div>
+	</body>
+</html>
